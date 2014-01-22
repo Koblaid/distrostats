@@ -30,13 +30,14 @@ def teardown_request(exception):
 def json():
     cur = g.db.execute('''
     SELECT
-        snapshot_time, count(*)
+        strftime('%s', snapshot_time), count(*)
     FROM
         snapshot_content sc
         JOIN snapshot s ON sc.snapshot_id = s.id
     GROUP BY snapshot_id
     ORDER BY s.snapshot_time''')
-    return jsonify({'chart_data': list(cur)})
+    data = [(int(unix_timestamp)*1000, count) for unix_timestamp, count in cur]
+    return jsonify({'chart_data': data})
 
 
 @app.route('/')
