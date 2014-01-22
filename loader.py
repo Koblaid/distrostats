@@ -2,6 +2,9 @@ import gzip
 import StringIO
 import os
 import sqlite3
+import time
+import traceback
+import random
 
 import dateutil.parser
 import requests
@@ -18,32 +21,66 @@ def find_first_timestamp_of_month(path):
     return url
 
 
-def iter_all_month_paths(year_overview_path):
+def get_month_paths(year_overview_path):
     r = requests.get(year_overview_path)
     doc = BeautifulSoup.BeautifulSoup(r.text)
+    paths = []
     for a_tag in doc.findAll('a'):
         href = a_tag['href']
         if href.startswith('./?year='):
-            yield href
+            paths.append(href)
+    return paths
 
 
-def download_from_snapshot_debian_org():
-    for month_segment in iter_all_month_paths('http://snapshot.debian.org/archive/debian/'):
-        url = find_first_timestamp_of_month('http://snapshot.debian.org/archive/debian/'+month_segment)
-        url = url.strip('/')
-        print 'Downloading %s... ' % url,
+def create_timestamp_file(filename):
+    print 'Creating "%s"...' % filename,
+    with open(filename, 'w') as f:
+        for month_segment in get_month_paths('http://snapshot.debian.org/archive/debian/'):
+            url = find_first_timestamp_of_month('http://snapshot.debian.org/archive/debian/'+month_segment)
+            url = url.strip('/')
+            f.write(url + '\n')
+    print 'done'
 
-        outfile_name = 'files/Packages_%s' % url
-        if os.path.exists(outfile_name):
+
+def read_timestamp_file(filename):
+    urls = []
+    with open(filename) as f:
+        return f.read().strip().split('\n')
+
+
+def download_from_snapshot_debian_org(paths, dist):
+    counter = 0
+    downloaded_counter = 0
+    error_counter = 0
+    skip_counter = 0
+
+    for url in paths:
+        print 'Downloading (% 3s/%s) %s... ' % (counter, len(paths), url),
+        counter += 1
+
+        outfile_path = 'files/%s/Packages_%s' % (dist, url)
+        if os.path.exists(outfile_path):
             print 'file found, skip download'
+            skip_counter += 1
             continue
+        tmpfile_path = 'files/tmp/Packages_%s_%s' % (url, random.randint(1, 10000))
 
-        url = 'http://snapshot.debian.org/archive/debian/%s/dists/stable/main/binary-i386/Packages.gz' % url
-        r = requests.get(url)
-        gzip_file = gzip.GzipFile(fileobj=StringIO.StringIO(r.content))
-        with open(outfile_name, 'w') as outfile:
-            outfile.write(gzip_file.read())
-        print 'done'
+        url = 'http://snapshot.debian.org/archive/debian/%s/dists/%s/main/binary-i386/Packages.gz' % (url, dist)
+        try:
+            r = requests.get(url)
+            gzip_file = gzip.GzipFile(fileobj=StringIO.StringIO(r.content))
+            with open(tmpfile_path, 'w') as tmpfile:
+                tmpfile.write(gzip_file.read())
+            print 'done'
+        except Exception, e:
+            print 'error when downloading %s' % url
+            print traceback.format_exc()
+            error_counter += 1
+        else:
+            os.rename(tmpfile_path, outfile_path)
+            downloaded_counter += 1
+
+    print '%s downloaded, %s skipped, %s errors' % (downloaded_counter, skip_counter, error_counter)
 
 
 def parse_file(filepath):
@@ -68,23 +105,37 @@ def parse_file(filepath):
     return pkg_dict
 
 
-def insert_file(conn, timestamp, filesize, pkg_dict, pkg_id_cache):
-    args = (timestamp.isoformat(), filesize)
-    cur = conn.execute('INSERT INTO snapshot (snapshot_time, filesize) VALUES (?, ?)', args)
-    snapshot_id = cur.lastrowid
+def insert_file(conn, dist, timestamp, filesize, pkg_dict, pkg_id_cache):
+    ts_text = timestamp.isoformat()
+    res = conn.execute('SELECT id FROM snapshot WHERE snapshot_time = ?', (ts_text,)).fetchall()
+    if res:
+        ((snapshot_id,),) = res
+    else:
+        args = (ts_text, filesize)
+        cur = conn.execute('INSERT INTO snapshot (snapshot_time, filesize) VALUES (?, ?)', args)
+        snapshot_id = cur.lastrowid
 
     for pkg_name, properties in pkg_dict.iteritems():
         pkg_id = pkg_id_cache.get(pkg_name)
         if pkg_id is None:
-            cur = conn.execute('INSERT INTO package (name) VALUES (?)', (pkg_name,))
-            pkg_id = cur.lastrowid
+            res = conn.execute('SELECT id FROM package WHERE name = ?', (pkg_name,)).fetchall()
+            if res:
+                ((pkg_id,),) = res
+            else:
+                cur = conn.execute('INSERT INTO package (name) VALUES (?)', (pkg_name,))
+                pkg_id = cur.lastrowid
             pkg_id_cache[pkg_name] = pkg_id
 
-        args = (snapshot_id, pkg_id)
-        conn.execute('INSERT INTO snapshot_content (snapshot_id, package_id) VALUES (?, ?)', args)
+
+        args = (snapshot_id, pkg_id, distributions[dist])
+        conn.execute('INSERT INTO snapshot_content (snapshot_id, package_id, distribution_id) VALUES (?, ?, ?)', args)
 
 
 db_filename = 'db.sqlite'
+distributions = {
+    'stable': 1,
+    'testing': 2,
+}
 
 def connect_db():
     conn = sqlite3.connect(db_filename)
@@ -97,27 +148,39 @@ def create_schema(conn):
     conn.executescript(sql)
 
 
-def import_files():
-    if os.path.exists(db_filename):
-        os.unlink(db_filename)
-    conn = connect_db()
-    create_schema(conn)
-
-    path = 'files'
+def import_files(dist):
+    path = 'files/%s' % dist
     pkg_id_cache = {}
-    for filename in os.listdir(path):
-        print 'Importing %s ...' % filename,
+    filenames = os.listdir(path)
+    counter = 0
+    for filename in filenames:
+        counter += 1
+        print 'Importing (% 3s/%s) %s ...' % (counter, len(filenames), filename),
         fullpath = os.path.join(path, filename)
         timestamp = dateutil.parser.parse(filename.split('_')[1])
         filesize =  os.path.getsize(fullpath)
         pkg_dict = parse_file(fullpath)
-        insert_file(conn, timestamp, filesize, pkg_dict, pkg_id_cache)
+        insert_file(conn, dist, timestamp, filesize, pkg_dict, pkg_id_cache)
         print 'done'
 
+
+
+if __name__ == '__main__':
+    #if os.path.exists(db_filename):
+    #    os.unlink(db_filename)
+    conn = connect_db()
+    create_schema(conn)
+
+    dist = 'stable'
+    timestamp_file = 'files/timestamps.txt'
+    if not os.path.exists(timestamp_file):
+        create_timestamp_file()
+    #paths = read_timestamp_file('files/timestamps.txt')
+    #download_from_snapshot_debian_org(paths, dist)
+    #import_files(dist)
+
+
+    import_files('stable')
+    import_files('testing')
     conn.commit()
     conn.close()
-
-
-#download_from_snapshot_debian_org()
-import_files()
-
