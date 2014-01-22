@@ -1,0 +1,4 @@
+BeautifulSoup
+Flask
+python-dateutil
+requests

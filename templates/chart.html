@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Word case chart</title>
+
+    <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="http://code.highcharts.com/highcharts.src.js"></script>
+    <script language="javascript" type="text/javascript">
+        $(function () {
+            $.getJSON('/json', function(data) {
+                console.log(data);
+                $('#container').highcharts({
+                    chart: {
+                        type: "line",
+                        zoomType: "x"
+                    },
+                    plotOptions: {
+                        series: {
+                            marker: {
+                                enabled: false
+                            }
+                        }
+                    },
+                    legend: {
+                        enabled: false
+                    },
+                    xAxis: {
+                        type: "datetime"
+                    },
+                    series: [
+                        {
+                            "index": 0,
+                            "name": "Package count",
+                            "data": data.chart_data
+                        }
+                    ]
+                });
+            });
+        });
+
+
+
+    </script>
+</head>
+<body>
+    <h3>Word case chart</h3>
+        <div id="container" style="width:100%; height:400px;"></div>
+    <br>
+</body>
+</html>
