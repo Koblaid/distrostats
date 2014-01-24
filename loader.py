@@ -50,19 +50,22 @@ def read_timestamp_file(filepath):
         return f.read().strip().split('\n')
 
 
-def download_from_snapshot_debian_org(path, timestamps, dist):
+def get_filepath(path, archive, timestamp, dist, arch):
+    filename = 'Packages_%s_%s_%s_main_binary-%s.txt' % (archive, timestamp, dist, arch)
+    filepath = os.path.join(path, dist, filename)
+    return filepath, filename
+
+
+def download_from_snapshot_debian_org(path, timestamps, archive, dist, arch):
     counter = 0
     downloaded_counter = 0
     error_counter = 0
     skip_counter = 0
-    archive = 'debian'
-    arch = 'i386'
 
     for timestamp in timestamps:
         counter += 1
         print 'Downloading (% 3s/%s) %s... ' % (counter, len(timestamps), timestamp),
-        filename = 'Packages_%s_%s_%s_main_binary-%s.txt' % (archive, timestamp, dist, arch)
-        outfile_path = os.path.join(path, dist, filename)
+        outfile_path, filename = get_filepath(path, archive, timestamp, dist, arch)
         if os.path.exists(outfile_path):
             print 'file found, skip download'
             skip_counter += 1
@@ -111,7 +114,7 @@ def parse_file(filepath):
 
 
 def insert_file(conn, dist, timestamp, filesize, pkg_dict, pkg_id_cache):
-    ts_text = timestamp.isoformat()
+    ts_text = parser.parse(timestamp).isoformat()
     res = conn.execute('SELECT id FROM snapshot WHERE snapshot_time = ?', (ts_text,)).fetchall()
     if res:
         ((snapshot_id,),) = res
@@ -153,21 +156,18 @@ def create_schema(conn):
     conn.executescript(sql)
 
 
-def iter_files(path):
-    filenames = os.listdir(path)
-    counter = 0
-    for filename in filenames:
-        counter += 1
-        print 'Importing (% 3s/%s) %s ...' % (counter, len(filenames), filename),
-        fullpath = os.path.join(path, filename)
-        yield fullpath
-        print 'done'
-
-
-def load_files_into_db(path, dist):
+def load_files_into_db(conn, path, timestamps, archive, dist, arch):
     pkg_id_cache = {}
-    for filepath in iter_files(os.path.join(path, dist)):
-        timestamp = parser.parse(filepath.split('_')[-1])
+    counter = 0
+    for timestamp in timestamps:
+        counter += 1
+        filepath, filename = get_filepath(path, archive, timestamp, dist, arch)
+        print 'Importing (% 3s/%s) %s ...' % (counter, len(timestamps), filename),
+        if not os.path.exists(filepath):
+            print 'file %s for timestamp %s not found, skipping' % (filepath, timestamp)
+            continue
+
         filesize =  os.path.getsize(filepath)
         pkg_dict = parse_file(filepath)
         insert_file(conn, dist, timestamp, filesize, pkg_dict, pkg_id_cache)
+        print 'done'
