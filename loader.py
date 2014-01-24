@@ -171,7 +171,7 @@ if __name__ == '__main__':
     dist = 'stable'
     timestamp_file = 'files/timestamps.txt'
 
-     if not os.path.exists(timestamp_file):
+    if not os.path.exists(timestamp_file):
         print 'Write timestamp file...',
         urls = get_urls_for_interval(rrule.WEEKLY)
         with open(timestamp_file, 'w') as f:
