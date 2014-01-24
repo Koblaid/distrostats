@@ -171,35 +171,3 @@ def load_files_into_db(path, dist):
         filesize =  os.path.getsize(filepath)
         pkg_dict = parse_file(filepath)
         insert_file(conn, dist, timestamp, filesize, pkg_dict, pkg_id_cache)
-
-
-
-if __name__ == '__main__':
-    #if os.path.exists(db_filename):
-    #    os.unlink(db_filename)
-    conn = connect_db()
-    #create_schema(conn)
-
-    dist = 'testing'
-    file_directory = '/media/ben/579781cd-f222-46b8-974b-e1741f7ceb61/distrostats'
-    timestamp_file = file_directory + '/timestamps.txt'
-
-    if os.path.exists(timestamp_file):
-        print 'Write timestamp file...',
-        timestamps = get_valid_timestamps(rrule.WEEKLY, FIRST_VALID_DAY)
-        write_timestamp_file(timestamp_file, timestamps)
-        print 'done'
-
-
-    timestamps = read_timestamp_file(timestamp_file)
-    #download_from_snapshot_debian_org(file_directory, timestamps, dist)
-    load_files_into_db(file_directory, dist)
-
-
-    #import_files('stable')
-    #import_files('testing')
-    #conn.commit()
-
-
-
-    conn.close()
