@@ -52,8 +52,8 @@ def download_from_snapshot_debian_org(paths, dist):
     skip_counter = 0
 
     for url in paths:
-        print 'Downloading (% 3s/%s) %s... ' % (counter, len(paths), url),
         counter += 1
+        print 'Downloading (% 3s/%s) %s... ' % (counter, len(paths), url),
 
         outfile_path = 'files/%s/Packages_%s' % (dist, url)
         if os.path.exists(outfile_path):
