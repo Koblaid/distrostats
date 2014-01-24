@@ -5,41 +5,38 @@ import sqlite3
 import time
 import traceback
 import random
+from datetime import datetime
 
-import dateutil.parser
+from dateutil import parser, rrule
 import requests
 import BeautifulSoup
 
 
-
-def find_first_timestamp_of_month(path):
-    r = requests.get(path)
-    doc = BeautifulSoup.BeautifulSoup(r.text)
-    p_block = doc.p
-    a_tag = p_block.a
-    url = a_tag['href']
-    return url
+FIRST_DAY = datetime(2005, 3, 12)
 
 
-def get_month_paths(year_overview_path):
-    r = requests.get(year_overview_path)
-    doc = BeautifulSoup.BeautifulSoup(r.text)
-    paths = []
-    for a_tag in doc.findAll('a'):
-        href = a_tag['href']
-        if href.startswith('./?year='):
-            paths.append(href)
-    return paths
+def get_urls_for_interval(interval_type):
+    day_urls = []
+    html_cache = {}
+    for dt in rrule.rrule(interval_type, dtstart=FIRST_DAY, until=datetime.now()):
+        url = 'http://snapshot.debian.org/archive/debian/?year=%s&month=%s' % (dt.year, dt.month)
+        html = html_cache.get(url)
+        if not html:
+            r = requests.get(url)
+            html_cache[url] = r.text
+            html = r.text
 
+        doc = BeautifulSoup.BeautifulSoup(html)
+        for a_tag in doc.findAll('a'):
+            href = a_tag['href']
+            if href.startswith(dt.strftime('%Y%m%dT')):
+                day_urls.append(href.strip('/'))
+                break
+        else:
+            print 'No url found for %s in %s' % (dt, url)
+            #raise Exception('No url found for %s in %s' % (dt, url))
 
-def create_timestamp_file(filename):
-    print 'Creating "%s"...' % filename,
-    with open(filename, 'w') as f:
-        for month_segment in get_month_paths('http://snapshot.debian.org/archive/debian/'):
-            url = find_first_timestamp_of_month('http://snapshot.debian.org/archive/debian/'+month_segment)
-            url = url.strip('/')
-            f.write(url + '\n')
-    print 'done'
+    return day_urls
 
 
 def read_timestamp_file(filename):
@@ -157,7 +154,7 @@ def import_files(dist):
         counter += 1
         print 'Importing (% 3s/%s) %s ...' % (counter, len(filenames), filename),
         fullpath = os.path.join(path, filename)
-        timestamp = dateutil.parser.parse(filename.split('_')[1])
+        timestamp = parser.parse(filename.split('_')[1])
         filesize =  os.path.getsize(fullpath)
         pkg_dict = parse_file(fullpath)
         insert_file(conn, dist, timestamp, filesize, pkg_dict, pkg_id_cache)
@@ -169,18 +166,30 @@ if __name__ == '__main__':
     #if os.path.exists(db_filename):
     #    os.unlink(db_filename)
     conn = connect_db()
-    create_schema(conn)
+    #create_schema(conn)
 
     dist = 'stable'
     timestamp_file = 'files/timestamps.txt'
-    if not os.path.exists(timestamp_file):
-        create_timestamp_file()
+
+     if not os.path.exists(timestamp_file):
+        print 'Write timestamp file...',
+        urls = get_urls_for_interval(rrule.WEEKLY)
+        with open(timestamp_file, 'w') as f:
+            for url in urls:
+                url = 'http://snapshot.debian.org/archive/debian/'+url
+                f.write(url + '\n')
+        print 'done'
+
+
     #paths = read_timestamp_file('files/timestamps.txt')
     #download_from_snapshot_debian_org(paths, dist)
     #import_files(dist)
 
 
-    import_files('stable')
-    import_files('testing')
-    conn.commit()
+    #import_files('stable')
+    #import_files('testing')
+    #conn.commit()
+
+
+
     conn.close()
