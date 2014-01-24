@@ -145,20 +145,25 @@ def create_schema(conn):
     conn.executescript(sql)
 
 
-def import_files(dist):
-    path = 'files/%s' % dist
-    pkg_id_cache = {}
+def iter_files(path):
     filenames = os.listdir(path)
     counter = 0
     for filename in filenames:
         counter += 1
         print 'Importing (% 3s/%s) %s ...' % (counter, len(filenames), filename),
         fullpath = os.path.join(path, filename)
-        timestamp = parser.parse(filename.split('_')[1])
-        filesize =  os.path.getsize(fullpath)
-        pkg_dict = parse_file(fullpath)
-        insert_file(conn, dist, timestamp, filesize, pkg_dict, pkg_id_cache)
+        yield fullpath
         print 'done'
+
+
+def load_files_into_db(dist):
+    path = 'files/%s' % dist
+    pkg_id_cache = {}
+    for filepath in iter_files(path):
+        timestamp = parser.parse(filepath.split('_')[-1])
+        filesize =  os.path.getsize(filepath)
+        pkg_dict = parse_file(filepath)
+        insert_file(conn, dist, timestamp, filesize, pkg_dict, pkg_id_cache)
 
 
 
@@ -182,7 +187,7 @@ if __name__ == '__main__':
 
     #paths = read_timestamp_file('files/timestamps.txt')
     #download_from_snapshot_debian_org(paths, dist)
-    #import_files(dist)
+    load_files_into_db(dist)
 
 
     #import_files('stable')
