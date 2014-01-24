@@ -11,13 +11,15 @@ import requests
 import BeautifulSoup
 
 
-FIRST_DAY = datetime(2005, 3, 12)
+FIRST_VALID_DAY = datetime(2005, 3, 12)
 
 
-def get_urls_for_interval(interval_type):
-    day_urls = []
+def get_valid_timestamps(interval_type, start, until=None):
+    if not until:
+        until = datetime.now()
+    valid_timestamps = []
     html_cache = {}
-    for dt in rrule.rrule(interval_type, dtstart=FIRST_DAY, until=datetime.now()):
+    for dt in rrule.rrule(interval_type, dtstart=start, until=until):
         url = 'http://snapshot.debian.org/archive/debian/?year=%s&month=%s' % (dt.year, dt.month)
         html = html_cache.get(url)
         if not html:
@@ -29,18 +31,22 @@ def get_urls_for_interval(interval_type):
         for a_tag in doc.findAll('a'):
             href = a_tag['href']
             if href.startswith(dt.strftime('%Y%m%dT')):
-                day_urls.append(href.strip('/'))
+                valid_timestamps.append(href.strip('/'))
                 break
         else:
-            print 'No url found for %s in %s' % (dt, url)
-            #raise Exception('No url found for %s in %s' % (dt, url))
-
-    return day_urls
+            print 'No timestamp found for %s in %s' % (dt, url)
+    return valid_timestamps
 
 
-def read_timestamp_file(filename):
+def write_timestamp_file(filepath, timestamps):
+    with open(filepath, 'w') as f:
+        for timestamp in timestamps:
+            f.write(timestamp + '\n')
+
+
+def read_timestamp_file(filepath):
     urls = []
-    with open(filename) as f:
+    with open(filepath) as f:
         return f.read().strip().split('\n')
 
 
@@ -178,12 +184,10 @@ if __name__ == '__main__':
     file_directory = '/media/ben/579781cd-f222-46b8-974b-e1741f7ceb61/distrostats'
     timestamp_file = file_directory + '/timestamps.txt'
 
-    if not os.path.exists(timestamp_file):
+    if os.path.exists(timestamp_file):
         print 'Write timestamp file...',
-        urls = get_urls_for_interval(rrule.WEEKLY)
-        with open(timestamp_file, 'w') as f:
-            for url in urls:
-                f.write(url + '\n')
+        timestamps = get_valid_timestamps(rrule.WEEKLY, FIRST_VALID_DAY)
+        write_timestamp_file(timestamp_file, timestamps)
         print 'done'
 
 
