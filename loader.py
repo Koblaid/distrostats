@@ -4,7 +4,6 @@ import os
 import sqlite3
 import time
 import traceback
-import random
 from datetime import datetime
 
 from dateutil import parser, rrule
@@ -45,26 +44,29 @@ def read_timestamp_file(filename):
         return f.read().strip().split('\n')
 
 
-def download_from_snapshot_debian_org(paths, dist):
+def download_from_snapshot_debian_org(path, timestamps, dist):
     counter = 0
     downloaded_counter = 0
     error_counter = 0
     skip_counter = 0
+    archive = 'debian'
+    arch = 'i386'
 
-    for url in paths:
+    for timestamp in timestamps:
         counter += 1
-        print 'Downloading (% 3s/%s) %s... ' % (counter, len(paths), url),
-
-        outfile_path = 'files/%s/Packages_%s' % (dist, url)
+        print 'Downloading (% 3s/%s) %s... ' % (counter, len(timestamps), timestamp),
+        filename = 'Packages_%s_%s_%s_main_binary-%s.txt' % (archive, timestamp, dist, arch)
+        outfile_path = os.path.join(path, dist, filename)
         if os.path.exists(outfile_path):
             print 'file found, skip download'
             skip_counter += 1
             continue
-        tmpfile_path = 'files/tmp/Packages_%s_%s' % (url, random.randint(1, 10000))
+        tmpfile_path = os.path.join(path, 'tmp', filename)
 
-        url = 'http://snapshot.debian.org/archive/debian/%s/dists/%s/main/binary-i386/Packages.gz' % (url, dist)
+        url = 'http://snapshot.debian.org/archive/%s/%s/dists/%s/main/binary-%s/Packages.gz' % (archive, timestamp, dist, arch)
         try:
             r = requests.get(url)
+
             gzip_file = gzip.GzipFile(fileobj=StringIO.StringIO(r.content))
             with open(tmpfile_path, 'w') as tmpfile:
                 tmpfile.write(gzip_file.read())
@@ -156,10 +158,9 @@ def iter_files(path):
         print 'done'
 
 
-def load_files_into_db(dist):
-    path = 'files/%s' % dist
+def load_files_into_db(path, dist):
     pkg_id_cache = {}
-    for filepath in iter_files(path):
+    for filepath in iter_files(os.path.join(path, dist)):
         timestamp = parser.parse(filepath.split('_')[-1])
         filesize =  os.path.getsize(filepath)
         pkg_dict = parse_file(filepath)
@@ -173,8 +174,9 @@ if __name__ == '__main__':
     conn = connect_db()
     #create_schema(conn)
 
-    dist = 'stable'
-    timestamp_file = 'files/timestamps.txt'
+    dist = 'testing'
+    file_directory = '/media/ben/579781cd-f222-46b8-974b-e1741f7ceb61/distrostats'
+    timestamp_file = file_directory + '/timestamps.txt'
 
     if not os.path.exists(timestamp_file):
         print 'Write timestamp file...',
@@ -185,9 +187,9 @@ if __name__ == '__main__':
         print 'done'
 
 
-    #paths = read_timestamp_file('files/timestamps.txt')
-    #download_from_snapshot_debian_org(paths, dist)
-    load_files_into_db(dist)
+    timestamps = read_timestamp_file(timestamp_file)
+    #download_from_snapshot_debian_org(file_directory, timestamps, dist)
+    load_files_into_db(file_directory, dist)
 
 
     #import_files('stable')
