@@ -176,7 +176,6 @@ if __name__ == '__main__':
         urls = get_urls_for_interval(rrule.WEEKLY)
         with open(timestamp_file, 'w') as f:
             for url in urls:
-                url = 'http://snapshot.debian.org/archive/debian/'+url
                 f.write(url + '\n')
         print 'done'
 
