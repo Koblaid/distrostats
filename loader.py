@@ -164,39 +164,16 @@ def parse_file(filepath):
     return pkg_dict
 
 
-def insert_file(conn, dist, timestamp, filesize, pkg_dict, pkg_id_cache):
-    ts_text = parser.parse(timestamp).isoformat()
-    res = conn.execute('SELECT id FROM snapshot WHERE snapshot_time = ?', (ts_text,)).fetchall()
-    if res:
-        ((snapshot_id,),) = res
-    else:
-        args = (ts_text, filesize)
-        cur = conn.execute('INSERT INTO snapshot (snapshot_time, filesize) VALUES (?, ?)', args)
-        snapshot_id = cur.lastrowid
-
-    for pkg_name, properties in pkg_dict.iteritems():
-        pkg_id = pkg_id_cache.get(pkg_name)
-        if pkg_id is None:
-            res = conn.execute('SELECT id FROM package WHERE name = ?', (pkg_name,)).fetchall()
-            if res:
-                ((pkg_id,),) = res
-            else:
-                cur = conn.execute('INSERT INTO package (name) VALUES (?)', (pkg_name,))
-                pkg_id = cur.lastrowid
-            pkg_id_cache[pkg_name] = pkg_id
+def insert_snapshots(conn, timestamps):
+    print('insert snapshots...', end='')
+    cur = conn.cursor()
+    for timestamp in timestamps:
+        ts_text = parser.parse(timestamp).isoformat()
+        cur.execute('INSERT INTO snapshot (snapshot_time) VALUES (?)', (ts_text,))
+    print('done')
 
 
-        args = (snapshot_id, pkg_id, distributions[dist])
-        conn.execute('INSERT INTO snapshot_content (snapshot_id, package_id, distribution_id) VALUES (?, ?, ?)', args)
-
-
-db_filename = 'db.sqlite'
-distributions = {
-    'stable': 1,
-    'testing': 2,
-}
-
-def connect_db():
+def connect_db(db_filename):
     conn = sqlite3.connect(db_filename)
     curs = conn.execute('PRAGMA foreign_keys = ON')
     return conn
@@ -208,17 +185,35 @@ def create_schema(conn):
 
 
 def load_files_into_db(conn, path, timestamps, archive, dist, arch):
-    pkg_id_cache = {}
     counter = Counter(len(timestamps))
     for timestamp in timestamps:
         filepath, filename = get_filepath(path, archive, timestamp, dist, arch)
         counter.print_current(filename)
         if not os.path.exists(filepath):
-            counter.skipped()
+            counter.not_found()
             continue
 
         filesize =  os.path.getsize(filepath)
         pkg_dict = parse_file(filepath)
-        insert_file(conn, dist, timestamp, filesize, pkg_dict, pkg_id_cache)
+
+        ts_text = parser.parse(timestamp).isoformat()
+        res = conn.execute('SELECT id FROM snapshot WHERE snapshot_time = ?', (ts_text,)).fetchall()
+        ((snapshot_id,),) = res
+
+        args = dict(
+            snapshot_id=snapshot_id,
+            filepath=filepath,
+            filesize=filesize,
+            distribution='debian '+dist,
+            archive=archive,
+            architecture=arch,
+            number_of_packages=len(pkg_dict),
+            number_of_maintainers=len(set((d['Maintainer'] for d in pkg_dict.values()))),
+        )
+        values = ','.join(args)
+        placeholders = ','.join((':%s'%k for k in args))
+        stmt = 'INSERT INTO snapshot_file (%s) VALUES (%s)' % (values, placeholders)
+        conn.execute(stmt, args)
         counter.success()
+
     counter.print_result()

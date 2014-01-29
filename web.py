@@ -58,9 +58,26 @@ def json():
     return jsonify({'chart_data': data})
 
 
+def get_table_data():
+    cur = g.db.execute('''
+    SELECT *
+    FROM snapshot s
+        JOIN snapshot_file sf ON sf.snapshot_id = s.id
+    ORDER BY s.snapshot_time, sf.distribution''')
+    res = cur.fetchall()
+    cols = [d[0] for d in cur.description]
+    data = []
+    for row in res:
+        d = dict(zip(cols, row))
+        d['snapshot_time'] = d['snapshot_time'][:10]
+        data.append(d)
+    return data
+
+
 @app.route('/')
 def index():
-    return render_template('chart.html')
+    data = get_table_data()
+    return render_template('chart.html', table=data)
 
 
 if __name__ == '__main__':
