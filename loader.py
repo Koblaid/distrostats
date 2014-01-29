@@ -1,3 +1,4 @@
+from __future__ import print_function
 import gzip
 import StringIO
 import os
@@ -12,6 +13,61 @@ import BeautifulSoup
 
 
 FIRST_VALID_DAY = datetime(2005, 3, 12)
+
+
+
+class Counter(object):
+    def __init__(self, total):
+        self._counters = {
+            'success': 0,
+            'skipped': 0,
+            'not_found': 0,
+            'error': 0,
+        }
+        self.total = total
+
+    def _print(self, text, no_newline=False):
+        if no_newline:
+            print(text, end='')
+        else:
+            print(text)
+
+    def _print_with_info(self, text, info):
+        if info:
+            text += ' (%s)' % info
+        self._print(text)
+
+    def _get_current_count(self):
+        return sum(self._counters.values())
+
+    def success(self, info=None):
+        self._counters['success'] += 1
+        self._print_with_info('done', info)
+
+    def skipped(self, info=None):
+        self._counters['skipped'] += 1
+        self._print_with_info('skipped', info)
+
+    def not_found(self, info=None):
+        self._counters['not_found'] += 1
+        self._print_with_info('file not found', info)
+
+    def error(self, info=None):
+        self._counters['error'] += 1
+        self._print_with_info('error', info)
+        self._print(traceback.format_exc())
+
+    def print_current(self, label):
+        current = self._get_current_count() + 1
+        l = str(len(str(self.total)))
+        text = 'Processing (% '+l+'s/% '+l+'s) %s... '
+        self._print(text % (current, self.total, label), True)
+
+    def print_result(self):
+        if self._get_current_count() != self.total:
+            self._print('Warning: %s should have been processed but only %s were counted' % (self.total, self._get_current_count()))
+        self._print('%(success)s processed, %(skipped)s skipped, %(not_found)s not found, %(error)s errors' % self._counters)
+
 
 
 def get_valid_timestamps(interval_type, start, until=None):
@@ -34,7 +90,7 @@ def get_valid_timestamps(interval_type, start, until=None):
                 valid_timestamps.append(href.strip('/'))
                 break
         else:
-            print 'No timestamp found for %s in %s' % (dt, url)
+            print('No timestamp found for %s in %s' % (dt, url))
     return valid_timestamps
 
 
@@ -57,42 +113,33 @@ def get_filepath(path, archive, timestamp, dist, arch):
 
 
 def download_from_snapshot_debian_org(path, timestamps, archive, dist, arch):
-    counter = 0
-    downloaded_counter = 0
-    error_counter = 0
-    skip_counter = 0
+    counter = Counter(len(timestamps))
 
     for timestamp in timestamps:
-        counter += 1
-        print 'Downloading (% 3s/%s) %s... ' % (counter, len(timestamps), timestamp),
+        counter.print_current(timestamp)
         outfile_path, filename = get_filepath(path, archive, timestamp, dist, arch)
         if os.path.exists(outfile_path):
-            print 'file found, skip download'
-            skip_counter += 1
+            counter.skipped('file exists')
             continue
         tmpfile_path = os.path.join(path, 'tmp', filename)
 
         url = 'http://snapshot.debian.org/archive/%s/%s/dists/%s/main/binary-%s/Packages.gz' % (archive, timestamp, dist, arch)
         r = requests.get(url)
         if r.status_code != 200:
-            print 'error when downloading %s (status=%s)' % (url, r.status_code)
-            error_counter += 1
+            counter.not_found('%s (HTTP %s)' % (url, r.status_code))
             continue
 
         try:
             gzip_file = gzip.GzipFile(fileobj=StringIO.StringIO(r.content))
             with open(tmpfile_path, 'w') as tmpfile:
                 tmpfile.write(gzip_file.read())
-            print 'done'
         except Exception, e:
-            print 'error while unzipping/writing %s' % url
-            print traceback.format_exc()
-            error_counter += 1
+            counter.error('error while unzipping/writing %s' % url)
         else:
             os.rename(tmpfile_path, outfile_path)
-            downloaded_counter += 1
+            counter.success()
 
-    print '%s downloaded, %s skipped, %s errors' % (downloaded_counter, skip_counter, error_counter)
+    counter.print_result()
 
 
 def parse_file(filepath):
@@ -162,16 +209,16 @@ def create_schema(conn):
 
 def load_files_into_db(conn, path, timestamps, archive, dist, arch):
     pkg_id_cache = {}
-    counter = 0
+    counter = Counter(len(timestamps))
     for timestamp in timestamps:
-        counter += 1
         filepath, filename = get_filepath(path, archive, timestamp, dist, arch)
-        print 'Importing (% 3s/%s) %s ...' % (counter, len(timestamps), filename),
+        counter.print_current(filename)
         if not os.path.exists(filepath):
-            print 'file %s for timestamp %s not found, skipping' % (filepath, timestamp)
+            counter.skipped()
             continue
 
         filesize =  os.path.getsize(filepath)
         pkg_dict = parse_file(filepath)
         insert_file(conn, dist, timestamp, filesize, pkg_dict, pkg_id_cache)
-        print 'done'
+        counter.success()
+    counter.print_result()

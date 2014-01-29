@@ -2,3 +2,4 @@ BeautifulSoup
 Flask
 python-dateutil
 requests
+mock
