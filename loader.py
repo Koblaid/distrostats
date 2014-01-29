@@ -73,15 +73,19 @@ def download_from_snapshot_debian_org(path, timestamps, archive, dist, arch):
         tmpfile_path = os.path.join(path, 'tmp', filename)
 
         url = 'http://snapshot.debian.org/archive/%s/%s/dists/%s/main/binary-%s/Packages.gz' % (archive, timestamp, dist, arch)
-        try:
-            r = requests.get(url)
+        r = requests.get(url)
+        if r.status_code != 200:
+            print 'error when downloading %s (status=%s)' % (url, r.status_code)
+            error_counter += 1
+            continue
 
+        try:
             gzip_file = gzip.GzipFile(fileobj=StringIO.StringIO(r.content))
             with open(tmpfile_path, 'w') as tmpfile:
                 tmpfile.write(gzip_file.read())
             print 'done'
         except Exception, e:
-            print 'error when downloading %s' % url
+            print 'error while unzipping/writing %s' % url
             print traceback.format_exc()
             error_counter += 1
         else:
