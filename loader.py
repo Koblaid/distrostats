@@ -9,6 +9,9 @@ from datetime import datetime
 from dateutil import parser, rrule
 import requests
 import BeautifulSoup
+from sqlalchemy import select
+
+import model as m
 
 
 FIRST_VALID_DAY = datetime(2005, 3, 12)
@@ -137,6 +140,39 @@ def insert_file(conn, dist, timestamp, filesize, pkg_dict, pkg_id_cache):
 
         args = (snapshot_id, pkg_id, distributions[dist])
         conn.execute('INSERT INTO snapshot_content (snapshot_id, package_id, distribution_id) VALUES (?, ?, ?)', args)
+
+
+def insert_file2(conn, dist, timestamp, filesize, pkg_dict, pkg_id_cache):
+    trans = conn.begin()
+    dt = parser.parse(timestamp)
+    sel = select([m.snapshot.c.id]).where(m.snapshot.c.snapshot_time == dt)
+    res = conn.execute(sel)
+    if res.rowcount > 0:
+        ((snapshot_id,),) = res
+    else:
+        res = conn.execute(m.snapshot.insert().values(snapshot_time=dt, filesize=filesize))
+        snapshot_id = res.inserted_primary_key[0]
+    c=0
+    for pkg_name, properties in pkg_dict.iteritems():
+        pkg_id = pkg_id_cache.get(pkg_name)
+        if pkg_id is None:
+            sel = select([m.package.c.id]).where(m.package.c.name == pkg_name)
+            res = conn.execute(sel)
+            if res.rowcount > 0:
+                ((pkg_id,),) = res
+            else:
+                ins = m.package.insert().values(name=pkg_name)
+                res = conn.execute(ins)
+                pkg_id = res.inserted_primary_key[0]
+            pkg_id_cache[pkg_name] = pkg_id
+
+        ins = m.snapshot_content.insert().values(snapshot_id=snapshot_id, package_id=pkg_id, distribution_id=distributions[dist])
+        conn.execute(ins)
+        c+=1
+        if c%1000==0:
+            print c
+
+    trans.commit()
 
 
 db_filename = 'db.sqlite'

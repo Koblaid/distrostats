@@ -1,8 +1,10 @@
 import os
 
 from dateutil import rrule
+from sqlalchemy import create_engine
 
 import loader
+import model as m
 
 
 
@@ -26,9 +28,21 @@ if __name__ == '__main__':
 
     #if os.path.exists(db_filename):
     #    os.unlink(db_filename)
-    conn = loader.connect_db()
-    #loader.create_schema(conn)
-    loader.load_files_into_db(conn, file_directory, timestamps, archive, dist, arch)
 
-    #conn.commit()
+
+    pkg_dict = loader.parse_file('/media/ben/579781cd-f222-46b8-974b-e1741f7ceb61/distrostats/testing/Packages_debian_20050312T000000Z_testing_main_binary-i386.txt')
+    pkg_id_cache = {}
+
+
+    conn = loader.connect_db()
+    loader.create_schema(conn)
+    loader.insert_file1(conn, dist, '20050312T000000Z', 234234, pkg_dict, pkg_id_cache)
+
+    conn.commit()
     conn.close()
+
+    '''
+    engine = create_engine('sqlite:///db2.sqlite', echo=False)
+    m.init_db(engine)
+    loader.insert_file2(engine.connect(), dist, '20050312T000000Z', 234234, pkg_dict, pkg_id_cache)
+    '''
