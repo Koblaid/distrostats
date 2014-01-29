@@ -151,14 +151,14 @@ def parse_file(filepath):
         lines = pkg_info.split('\n')
         properties = {}
 
+        last_key = None
         for line in lines:
             if line.startswith(' '):
-                properties.setdefault('Long description', '')
-                properties['Long description'] += line
+                properties[last_key] += line
             else:
                 key, sep, value = line.partition(': ')
                 properties[key] = value
-
+                last_key = key
         pkg_dict[properties['Package']] = properties
 
     return pkg_dict
