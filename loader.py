@@ -70,13 +70,13 @@ class Counter(object):
 
 
 
-def get_valid_timestamps(interval_type, start, until=None):
+def get_valid_timestamps(archive, interval_type, start, until=None):
     if not until:
         until = datetime.now()
     valid_timestamps = []
     html_cache = {}
     for dt in rrule.rrule(interval_type, dtstart=start, until=until):
-        url = 'http://snapshot.debian.org/archive/debian/?year=%s&month=%s' % (dt.year, dt.month)
+        url = 'http://snapshot.debian.org/archive/%s/?year=%s&month=%s' % (archive, dt.year, dt.month)
         html = html_cache.get(url)
         if not html:
             r = requests.get(url)
@@ -108,7 +108,7 @@ def read_timestamp_file(filepath):
 
 def get_filepath(path, archive, timestamp, dist, arch):
     filename = 'Packages_%s_%s_%s_main_binary-%s.txt' % (archive, timestamp, dist, arch)
-    filepath = os.path.join(path, dist, filename)
+    filepath = os.path.join(path, archive, dist, filename)
     return filepath, filename
 
 
@@ -164,12 +164,32 @@ def parse_file(filepath):
     return pkg_dict
 
 
-def insert_snapshots(conn, timestamps):
+def get_static_ids(conn):
+    id_cache = {}
+
+    res = conn.execute('SELECT name, id from archive')
+    id_cache['archive'] = dict(res)
+
+    res = conn.execute('SELECT name, id from distribution')
+    id_cache['distribution'] = dict(res)
+
+    res = conn.execute('SELECT name, id from pkg_repository')
+    id_cache['pkg_repository'] = dict(res)
+
+    res = conn.execute('SELECT name, id from architecture')
+    id_cache['architecture'] = dict(res)
+
+    return id_cache
+
+
+def insert_snapshots(conn, id_cache, archive, timestamps):
     print('insert snapshots...', end='')
+    archive_id = id_cache['archive'][archive]
     cur = conn.cursor()
     for timestamp in timestamps:
         ts_text = parser.parse(timestamp).isoformat()
-        cur.execute('INSERT INTO snapshot (snapshot_time) VALUES (?)', (ts_text,))
+        stmt = 'INSERT INTO snapshot (archive_id, snapshot_time) VALUES (?, ?)'
+        cur.execute(stmt, (archive_id, ts_text))
     print('done')
 
 
@@ -184,7 +204,7 @@ def create_schema(conn):
     conn.executescript(sql)
 
 
-def load_files_into_db(conn, path, timestamps, archive, dist, arch):
+def load_files_into_db(conn, id_cache, path, timestamps, archive, dist, arch):
     counter = Counter(len(timestamps))
     for timestamp in timestamps:
         filepath, filename = get_filepath(path, archive, timestamp, dist, arch)
@@ -197,16 +217,17 @@ def load_files_into_db(conn, path, timestamps, archive, dist, arch):
         pkg_dict = parse_file(filepath)
 
         ts_text = parser.parse(timestamp).isoformat()
-        res = conn.execute('SELECT id FROM snapshot WHERE snapshot_time = ?', (ts_text,)).fetchall()
+        stmt = 'SELECT id FROM snapshot WHERE snapshot_time = ? and archive_id = ?'
+        res = conn.execute(stmt, (ts_text, id_cache['archive'][archive])).fetchall()
         ((snapshot_id,),) = res
 
         args = dict(
             snapshot_id=snapshot_id,
+            distribution_id=id_cache['distribution'][dist],
+            pkg_repository_id=id_cache['pkg_repository']['main'],
+            architecture_id=id_cache['architecture'][arch],
             filepath=filepath,
             filesize=filesize,
-            distribution='debian '+dist,
-            archive=archive,
-            architecture=arch,
             number_of_packages=len(pkg_dict),
             number_of_maintainers=len(set((d['Maintainer'] for d in pkg_dict.values()))),
         )

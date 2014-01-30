@@ -60,12 +60,20 @@ def json():
 
 def get_table_data():
     cur = g.db.execute('''
-    SELECT *
+    SELECT s.snapshot_time, d.name, r.name, a.name, sf.number_of_packages, sf.number_of_maintainers, sf.filesize, sf.filepath
     FROM snapshot s
-        JOIN snapshot_file sf ON sf.snapshot_id = s.id
-    ORDER BY s.snapshot_time, sf.distribution''')
+        LEFT JOIN distribution d     ON sf.distribution_id = d.id
+        LEFT JOIN pkg_repository r   ON sf.pkg_repository_id = r.id
+        LEFT JOIN architecture a     ON sf.architecture_id = a.id
+        LEFT JOIN snapshot_file sf   ON sf.snapshot_id = s.id
+    WHERE
+        a.name in ('i386', 'amd64')
+        AND d.name in ('stable', 'testing')
+        AND r.name = 'main'
+    ORDER BY s.snapshot_time, d.name''')
     res = cur.fetchall()
-    cols = [d[0] for d in cur.description]
+    cols = 'snapshot_time distribution repository architecture number_of_packages number_of_maintainers filesize filepath'.split()
+
     data = []
     for row in res:
         d = dict(zip(cols, row))
