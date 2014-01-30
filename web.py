@@ -1,4 +1,5 @@
 import csv
+from datetime import datetime
 
 import sqlite3
 from flask import Flask, request, render_template, g, jsonify
@@ -26,38 +27,6 @@ def teardown_request(exception):
         db.close()
 
 
-@app.route('/json')
-def json():
-    cur = g.db.execute('''
-    SELECT
-        distribution_id, strftime('%s', snapshot_time), count(*)
-    FROM
-        snapshot_content sc
-        JOIN snapshot s ON sc.snapshot_id = s.id
-    GROUP BY distribution_id, snapshot_id
-    ORDER BY s.snapshot_time''')
-    stable = []
-    testing = []
-    for distribution_id, unix_timestamp, count in cur:
-        ts = int(unix_timestamp)*1000
-        point = (ts, count)
-        if distribution_id == 1:
-            stable.append(point)
-        else:
-            testing.append(point)
-
-    data = [{
-        'index': 0,
-        'name': 'stable',
-        'data': stable,
-    }, {
-        'index': 1,
-        'name': 'testing',
-        'data': testing
-    }]
-    return jsonify({'chart_data': data})
-
-
 def get_table_data():
     cur = g.db.execute('''
     SELECT s.snapshot_time, d.name, r.name, a.name, sf.number_of_packages, sf.number_of_maintainers, sf.filesize, sf.filepath
@@ -80,6 +49,75 @@ def get_table_data():
         d['snapshot_time'] = d['snapshot_time'][:10]
         data.append(d)
     return data
+
+
+@app.route('/json')
+def json():
+    sorted_data = {
+        'stable': {
+            'i386': {
+                'pkg': [],
+                'maintainer': [],
+            },
+            'amd64': {
+                'pkg': [],
+                'maintainer': [],
+            },
+        },
+        'testing': {
+            'i386': {
+                'pkg': [],
+                'maintainer': [],
+            },
+            'amd64': {
+                'pkg': [],
+                'maintainer': [],
+            },
+        }
+    }
+
+    data = get_table_data()
+    for row in data:
+        if not row['filepath']:
+            continue
+        ts = int(datetime.strptime(row['snapshot_time'], '%Y-%m-%d').strftime('%s'))*1000
+        sorted_data[row['distribution']][row['architecture']]['pkg'].append((ts, row['number_of_packages']))
+        sorted_data[row['distribution']][row['architecture']]['maintainer'].append((ts, row['number_of_maintainers']))
+
+    out = [{
+        'index': 0,
+        'name': 'stable i386 pkg',
+        'data': sorted_data['stable']['i386']['pkg'],
+    }, {
+        'index': 1,
+        'name': 'stable amd64 pkg',
+        'data': sorted_data['stable']['amd64']['pkg'],
+    }, {
+        'index': 2,
+        'name': 'testing i386 pkg',
+        'data': sorted_data['testing']['i386']['pkg']
+    }, {
+        'index': 3,
+        'name': 'testing amd64 pkg',
+        'data': sorted_data['testing']['amd64']['pkg']
+    },{
+        'index': 4,
+        'name': 'stable i386 maintainer',
+        'data': sorted_data['stable']['i386']['maintainer'],
+    }, {
+        'index': 5,
+        'name': 'stable amd64 maintainer',
+        'data': sorted_data['stable']['amd64']['maintainer'],
+    }, {
+        'index': 6,
+        'name': 'testing i386 maintainer',
+        'data': sorted_data['testing']['i386']['maintainer']
+    }, {
+        'index': 7,
+        'name': 'testing amd64 maintainer',
+        'data': sorted_data['testing']['amd64']['maintainer']
+    }]
+    return jsonify({'chart_data': out})
 
 
 @app.route('/')
