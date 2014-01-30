@@ -90,13 +90,25 @@
                 <td>{{ row.distribution }}</td>
                 <td>{{ row.repository }}</td>
                 <td>{{ row.architecture }}</td>
-                <td>{{ row.number_of_packages }}</td>
-                <td>{{ row.number_of_maintainers }}</td>
-                <td>{{ row.filesize }}</td>
-                <td>{{ row.filepath }}</td>
+                <td>{{ row.number_of_packages or '' }}</td>
+                <td>{{ row.number_of_maintainers or ''}}</td>
+                <td>{{ row.filesize or ''}}</td>
+                <td>{{ row.filepath or ''}}</td>
             </tr>
             {% endfor %}
         </tbody>
+        <tfoot>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>{{ total_filesize }} bytes</td>
+                <td>{{ number_of_files }} files</td>
+            </tr>
+        </tfoot>
     </table>
 </body>
 </html>
