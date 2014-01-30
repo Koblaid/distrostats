@@ -36,7 +36,7 @@ def get_table_data():
         LEFT JOIN architecture a     ON sf.architecture_id = a.id
         LEFT JOIN snapshot_file sf   ON sf.snapshot_id = s.id
     WHERE
-        a.name in ('i386', 'amd64')
+        a.name in ('i386', 'amd64', 'kfreebsd-amd64')
         AND d.name in ('stable', 'testing')
         AND r.name = 'main'
     ORDER BY s.snapshot_time, d.name''')
@@ -63,6 +63,10 @@ def json():
                 'pkg': [],
                 'maintainer': [],
             },
+            'kfreebsd-amd64': {
+                'pkg': [],
+                'maintainer': [],
+            },
         },
         'testing': {
             'i386': {
@@ -73,6 +77,10 @@ def json():
                 'pkg': [],
                 'maintainer': [],
             },
+            'kfreebsd-amd64': {
+                'pkg': [],
+                'maintainer': [],
+            }
         }
     }
 
@@ -116,6 +124,22 @@ def json():
         'index': 7,
         'name': 'testing amd64 maintainer',
         'data': sorted_data['testing']['amd64']['maintainer']
+    }, {
+        'index': 8,
+        'name': 'testing kfreebsd-amd64 pkg',
+        'data': sorted_data['testing']['kfreebsd-amd64']['pkg']
+    }, {
+        'index': 9,
+        'name': 'testing kfreebsd-amd64 maintainer',
+        'data': sorted_data['testing']['kfreebsd-amd64']['maintainer']
+    }, {
+        'index': 10,
+        'name': 'stable kfreebsd-amd64 pkg',
+        'data': sorted_data['stable']['kfreebsd-amd64']['pkg']
+    }, {
+        'index': 11,
+        'name': 'stable kfreebsd-amd64 maintainer',
+        'data': sorted_data['stable']['kfreebsd-amd64']['maintainer']
     }]
     return jsonify({'chart_data': out})
 

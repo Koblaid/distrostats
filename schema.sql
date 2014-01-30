@@ -71,3 +71,4 @@ INSERT INTO pkg_repository (name) VALUES ('non-free');
 
 INSERT INTO architecture (name) VALUES ('i386');
 INSERT INTO architecture (name) VALUES ('amd64');
+INSERT INTO architecture (name) VALUES ('kfreebsd-amd64');
