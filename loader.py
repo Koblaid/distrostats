@@ -229,7 +229,7 @@ def load_files_into_db(conn, id_cache, path, timestamps, archive, dist, arch):
             filepath=filepath,
             filesize=filesize,
             number_of_packages=len(pkg_dict),
-            number_of_maintainers=len(set((d['Maintainer'] for d in pkg_dict.values()))),
+            number_of_maintainers=len(set((d['Maintainer'] for d in pkg_dict.itervalues()))),
         )
         values = ','.join(args)
         placeholders = ','.join((':%s'%k for k in args))
