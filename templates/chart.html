@@ -7,8 +7,9 @@
     <script src="http://code.highcharts.com/highcharts.src.js"></script>
     <script language="javascript" type="text/javascript">
 
-        function createChart(divId, series){
+        function createChart(divId, title, series){
             $(divId).highcharts({
+                title: { text: title },
                 chart: {
                     type: "line",
                     zoomType: "x"
@@ -94,10 +95,10 @@
                     });
                 });
 
-                createChart('#chart_package', package_chart_data);
-                createChart('#chart_maintainer', maintainer_chart_data);
-                createChart('#chart_size', size_chart_data);
-                createChart('#chart_pack_ratio', pack_ratio_chart_data);
+                createChart('#chart_package', 'Number of packages', package_chart_data);
+                createChart('#chart_maintainer', 'Number of maintainers', maintainer_chart_data);
+                createChart('#chart_size', 'Package size / installed size', size_chart_data);
+                createChart('#chart_pack_ratio', 'Ratio: package size - install size', pack_ratio_chart_data);
 
             });
         });
@@ -111,18 +112,18 @@
     </style>
 </head>
 <body>
-    <h3>Number of Debian packages over time</h3>
-        <div id="chart_package" style="width:100%; height:400px;"></div>
-        Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
+    <div id="chart_package" style="width:100%; height:400px;"></div>
+    Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
 
-        <div id="chart_maintainer" style="width:100%; height:400px;"></div>
-        Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
+    <div id="chart_maintainer" style="width:100%; height:400px;"></div>
+    Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
 
-        <div id="chart_size" style="width:100%; height:400px;"></div>
-        Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
+    <div id="chart_size" style="width:100%; height:400px;"></div>
+    Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
 
-        <div id="chart_pack_ratio" style="width:100%; height:400px;"></div>
-        Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
+    <div id="chart_pack_ratio" style="width:100%; height:400px;"></div>
+    Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
+
     <br>
     <table border=1>
         <thead>
