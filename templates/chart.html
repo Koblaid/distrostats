@@ -67,6 +67,8 @@
 
                 var package_chart_data = [];
                 var maintainer_chart_data = [];
+                var size_chart_data = [];
+                var pack_ratio_chart_data = [];
                 $.each(data.metrics, function(dist_name, arches){
                     $.each(arches, function(arch_name, metrics){
                         package_chart_data.push({
@@ -77,11 +79,25 @@
                             name: dist_name + ' ' + arch_name,
                             data: metrics.maintainer,
                         });
+                        size_chart_data.push({
+                            name: dist_name + ' ' + arch_name + ' avg size',
+                            data: metrics.avg_size
+                        });
+                        size_chart_data.push({
+                            name: dist_name + ' ' + arch_name + ' avg installed size',
+                            data: metrics.avg_installed_size
+                        });
+                        pack_ratio_chart_data.push({
+                            name: dist_name + ' ' + arch_name + ' avg pack ratio',
+                            data: metrics.avg_pack_ratio
+                        });
                     });
                 });
 
                 createChart('#chart_package', package_chart_data);
                 createChart('#chart_maintainer', maintainer_chart_data);
+                createChart('#chart_size', size_chart_data);
+                createChart('#chart_pack_ratio', pack_ratio_chart_data);
 
             });
         });
@@ -100,6 +116,12 @@
         Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
 
         <div id="chart_maintainer" style="width:100%; height:400px;"></div>
+        Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
+
+        <div id="chart_size" style="width:100%; height:400px;"></div>
+        Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
+
+        <div id="chart_pack_ratio" style="width:100%; height:400px;"></div>
         Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
     <br>
     <table border=1>
