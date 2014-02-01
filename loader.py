@@ -214,7 +214,7 @@ def load_files_into_db(conn, id_cache, path, timestamps, archive, dist, arch):
             continue
 
         filesize =  os.path.getsize(filepath)
-        pkg_dict = parse_file(filepath)
+        file_dict = parse_file(filepath)
 
         ts_text = parser.parse(timestamp).isoformat()
         stmt = 'SELECT id FROM snapshot WHERE snapshot_time = ? and archive_id = ?'
@@ -229,7 +229,7 @@ def load_files_into_db(conn, id_cache, path, timestamps, archive, dist, arch):
             filepath=filepath,
             filesize=filesize,
         )
-        args.update(stats(pkg_dict))
+        args.update(stats(file_dict))
         values = ','.join(args)
         placeholders = ','.join((':%s'%k for k in args))
         stmt = 'INSERT INTO snapshot_file (%s) VALUES (%s)' % (values, placeholders)
@@ -239,19 +239,19 @@ def load_files_into_db(conn, id_cache, path, timestamps, archive, dist, arch):
     counter.print_result()
 
 
-def total_sum(pkg_dicts, key):
+def total_sum(file_dict, key):
     total_size = 0
-    for pkg_dict in pkg_dicts.itervalues():
+    for pkg_dict in file_dict.itervalues():
         size = int(pkg_dict[key])
         total_size += size
     return total_size
 
 
-def stats(pkg_dict):
-    number_of_packages = len(pkg_dict)
-    number_of_maintainers = len(set((d['Maintainer'] for d in pkg_dict.itervalues())))
-    total_pkg_packed_size = total_sum(pkg_dict, 'Size')
-    total_pkg_installed_size = total_sum(pkg_dict, 'Installed-Size') * 1024
+def stats(file_dict):
+    number_of_packages = len(file_dict)
+    number_of_maintainers = len(set((d['Maintainer'] for d in file_dict.itervalues())))
+    total_pkg_packed_size = total_sum(file_dict, 'Size')
+    total_pkg_installed_size = total_sum(file_dict, 'Installed-Size') * 1024
     avg_size = 1. * total_pkg_packed_size / number_of_packages
     avg_installed_size = 1. * total_pkg_installed_size / number_of_packages
     avg_pack_ratio = 1.* total_pkg_packed_size / total_pkg_installed_size
