@@ -40,7 +40,7 @@ def get_table_data():
         sf.filepath,
         sf.total_packed_size,
         sf.total_installed_size,
-        sf.avg_pack_ratio
+        sf.total_packed_size / sf.total_installed_size
     FROM snapshot s
         LEFT JOIN distribution d     ON sf.distribution_id = d.id
         LEFT JOIN pkg_repository r   ON sf.pkg_repository_id = r.id

@@ -50,7 +50,6 @@ CREATE TABLE snapshot_file (
   number_of_maintainers INTEGER NOT NULL,
   total_packed_size     INTEGER NOT NULL,
   total_installed_size  INTEGER NOT NULL,
-  avg_pack_ratio        INTEGER NOT NULL,
   FOREIGN KEY(snapshot_id)          REFERENCES snapshot(id),
   FOREIGN KEY(distribution_id)      REFERENCES distribution(id),
   FOREIGN KEY(pkg_repository_id)    REFERENCES pkg_repository(id),

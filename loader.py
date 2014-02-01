@@ -252,12 +252,10 @@ def stats(file_dict):
     number_of_maintainers = len(set((d['Maintainer'] for d in file_dict.itervalues())))
     total_packed_size = total_sum(file_dict, 'Size')
     total_installed_size = total_sum(file_dict, 'Installed-Size') * 1024
-    avg_pack_ratio = 1.* total_packed_size / total_installed_size
 
     return dict(
         number_of_packages=number_of_packages,
         number_of_maintainers=number_of_maintainers,
         total_packed_size=total_packed_size,
         total_installed_size=total_installed_size,
-        avg_pack_ratio=avg_pack_ratio
     )
