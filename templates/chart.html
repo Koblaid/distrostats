@@ -61,6 +61,30 @@
             });
         }
 
+        function toggleSeries(){
+            var archs = [];
+            $('input[name="arch"]:checked').each(function(){
+                archs.push($(this).val());
+            });
+
+            var dists = [];
+            $('input[name="dist"]:checked').each(function(){
+                dists.push($(this).val());
+            });
+
+            $('.chart').each(function(index, chart){
+                $.each($(chart).highcharts().series, function(index, one_series){
+                    var shouldBeVisible = $.inArray(one_series.options.distribution, dists) !== -1 &&
+                                          $.inArray(one_series.options.architecture, archs) !== -1;
+
+                    if (one_series.visible !== shouldBeVisible){
+                        one_series.setVisible(shouldBeVisible);
+                    }
+                });
+            });
+
+        }
+
         $(function () {
             $.getJSON('/json', function(data) {
 
@@ -71,38 +95,60 @@
                 var pack_ratio_chart_data = [];
                 $.each(data.metrics, function(dist_name, arches){
                     $.each(arches, function(arch_name, metrics){
+                        var visible = dist_name === 'testing' && arch_name === 'amd64';
 
                         package_chart_data.push({
                             name: dist_name + ' ' + arch_name,
                             data: metrics.pkg,
+                            distribution: dist_name,
+                            architecture: arch_name,
+                            visible: visible,
                         });
 
                         maintainer_chart_data.push({
                             name: dist_name + ' ' + arch_name,
                             data: metrics.maintainer,
+                            distribution: dist_name,
+                            architecture: arch_name,
+                            visible: visible,
                         });
 
                         size_chart_data.push({
                             name: dist_name + ' ' + arch_name + ' total packed size',
-                            data: metrics.total_packed_size
+                            data: metrics.total_packed_size,
+                            distribution: dist_name,
+                            architecture: arch_name,
+                            visible: visible,
                         });
                         size_chart_data.push({
                             name: dist_name + ' ' + arch_name + ' total installed size',
-                            data: metrics.total_installed_size
+                            data: metrics.total_installed_size,
+                            distribution: dist_name,
+                            architecture: arch_name,
+                            visible: visible,
                         });
 
                         avg_size_chart_data.push({
                             name: dist_name + ' ' + arch_name + ' average packed size',
-                            data: metrics.avg_packed_size
+                            data: metrics.avg_packed_size,
+                            distribution: dist_name,
+                            architecture: arch_name,
+                            visible: visible,
                         });
                         avg_size_chart_data.push({
                             name: dist_name + ' ' + arch_name + ' average installed size',
-                            data: metrics.avg_installed_size
+                            data: metrics.avg_installed_size,
+                            distribution: dist_name,
+                            architecture: arch_name,
+                            visible: visible,
                         });
 
                         pack_ratio_chart_data.push({
                             name: dist_name + ' ' + arch_name + ' avg pack ratio',
-                            data: metrics.avg_pack_ratio
+                            data: metrics.avg_pack_ratio,
+                            distribution: dist_name,
+                            architecture: arch_name,
+                            visible: visible,
                         });
                     });
                 });
@@ -120,19 +166,26 @@
     </script>
 </head>
 <body>
-    <div id="chart_package" style="width:100%; height:400px;"></div>
+    <input type="checkbox" onclick="toggleSeries();" name="arch" value="i386">i386</checkbox>
+    <input type="checkbox" onclick="toggleSeries();" name="arch" value="amd64" checked="checked">amd64</checkbox>
+    <input type="checkbox" onclick="toggleSeries();" name="arch" value="kfreebsd-amd64">kfreebsd-amd64</checkbox>
+    <br>
+    <input type="checkbox" onclick="toggleSeries();" name="dist" value="stable">stable</checkbox>
+    <input type="checkbox" onclick="toggleSeries();" name="dist" value="testing" checked="checked">testing</checkbox>
+
+    <div class="chart" id="chart_package" style="width:100%; height:400px;"></div>
     Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
 
-    <div id="chart_maintainer" style="width:100%; height:400px;"></div>
+    <div class="chart" id="chart_maintainer" style="width:100%; height:400px;"></div>
     Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
 
-    <div id="chart_size" style="width:100%; height:400px;"></div>
+    <div class="chart" id="chart_size" style="width:100%; height:400px;"></div>
     Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
 
-    <div id="chart_avg_size" style="width:100%; height:400px;"></div>
+    <div class="chart" id="chart_avg_size" style="width:100%; height:400px;"></div>
     Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
 
-    <div id="chart_pack_ratio" style="width:100%; height:400px;"></div>
+    <div class="chart" id="chart_pack_ratio" style="width:100%; height:400px;"></div>
     Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
 </body>
 </html>
