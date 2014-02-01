@@ -228,9 +228,8 @@ def load_files_into_db(conn, id_cache, path, timestamps, archive, dist, arch):
             architecture_id=id_cache['architecture'][arch],
             filepath=filepath,
             filesize=filesize,
-            number_of_packages=len(pkg_dict),
-            number_of_maintainers=len(set((d['Maintainer'] for d in pkg_dict.itervalues()))),
         )
+        args.update(stats(pkg_dict))
         values = ','.join(args)
         placeholders = ','.join((':%s'%k for k in args))
         stmt = 'INSERT INTO snapshot_file (%s) VALUES (%s)' % (values, placeholders)
@@ -238,3 +237,29 @@ def load_files_into_db(conn, id_cache, path, timestamps, archive, dist, arch):
         counter.success()
 
     counter.print_result()
+
+
+def total_sum(pkg_dicts, key):
+    total_size = 0
+    for pkg_dict in pkg_dicts.itervalues():
+        size = int(pkg_dict[key])
+        total_size += size
+    return total_size
+
+
+def stats(pkg_dict):
+    number_of_packages = len(pkg_dict)
+    number_of_maintainers = len(set((d['Maintainer'] for d in pkg_dict.itervalues())))
+    total_pkg_packed_size = total_sum(pkg_dict, 'Size')
+    total_pkg_installed_size = total_sum(pkg_dict, 'Installed-Size') * 1024
+    avg_size = 1. * total_pkg_packed_size / number_of_packages
+    avg_installed_size = 1. * total_pkg_installed_size / number_of_packages
+    avg_pack_ratio = 1.* total_pkg_packed_size / total_pkg_installed_size
+
+    return dict(
+        number_of_packages=number_of_packages,
+        number_of_maintainers=number_of_maintainers,
+        avg_size=avg_size,
+        avg_installed_size=avg_installed_size,
+        avg_pack_ratio=avg_pack_ratio
+    )
