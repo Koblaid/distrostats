@@ -53,95 +53,16 @@ def get_table_data():
 
 @app.route('/json')
 def json():
-    sorted_data = {
-        'stable': {
-            'i386': {
-                'pkg': [],
-                'maintainer': [],
-            },
-            'amd64': {
-                'pkg': [],
-                'maintainer': [],
-            },
-            'kfreebsd-amd64': {
-                'pkg': [],
-                'maintainer': [],
-            },
-        },
-        'testing': {
-            'i386': {
-                'pkg': [],
-                'maintainer': [],
-            },
-            'amd64': {
-                'pkg': [],
-                'maintainer': [],
-            },
-            'kfreebsd-amd64': {
-                'pkg': [],
-                'maintainer': [],
-            }
-        }
-    }
-
     data = get_table_data()
+    grouped_data = {}
     for row in data:
         if not row['filepath']:
             continue
         ts = int(datetime.strptime(row['snapshot_time'], '%Y-%m-%d').strftime('%s'))*1000
-        sorted_data[row['distribution']][row['architecture']]['pkg'].append((ts, row['number_of_packages']))
-        sorted_data[row['distribution']][row['architecture']]['maintainer'].append((ts, row['number_of_maintainers']))
-
-    out = [{
-        'index': 0,
-        'name': 'stable i386 pkg',
-        'data': sorted_data['stable']['i386']['pkg'],
-    }, {
-        'index': 1,
-        'name': 'stable amd64 pkg',
-        'data': sorted_data['stable']['amd64']['pkg'],
-    }, {
-        'index': 2,
-        'name': 'testing i386 pkg',
-        'data': sorted_data['testing']['i386']['pkg']
-    }, {
-        'index': 3,
-        'name': 'testing amd64 pkg',
-        'data': sorted_data['testing']['amd64']['pkg']
-    },{
-        'index': 4,
-        'name': 'stable i386 maintainer',
-        'data': sorted_data['stable']['i386']['maintainer'],
-    }, {
-        'index': 5,
-        'name': 'stable amd64 maintainer',
-        'data': sorted_data['stable']['amd64']['maintainer'],
-    }, {
-        'index': 6,
-        'name': 'testing i386 maintainer',
-        'data': sorted_data['testing']['i386']['maintainer']
-    }, {
-        'index': 7,
-        'name': 'testing amd64 maintainer',
-        'data': sorted_data['testing']['amd64']['maintainer']
-    }, {
-        'index': 8,
-        'name': 'testing kfreebsd-amd64 pkg',
-        'data': sorted_data['testing']['kfreebsd-amd64']['pkg']
-    }, {
-        'index': 9,
-        'name': 'testing kfreebsd-amd64 maintainer',
-        'data': sorted_data['testing']['kfreebsd-amd64']['maintainer']
-    }, {
-        'index': 10,
-        'name': 'stable kfreebsd-amd64 pkg',
-        'data': sorted_data['stable']['kfreebsd-amd64']['pkg']
-    }, {
-        'index': 11,
-        'name': 'stable kfreebsd-amd64 maintainer',
-        'data': sorted_data['stable']['kfreebsd-amd64']['maintainer']
-    }]
-    return jsonify({'chart_data': out})
+        d = grouped_data.setdefault(row['distribution'], {}).setdefault(row['architecture'], {})
+        d.setdefault('pkg', []).append((ts, row['number_of_packages']))
+        d.setdefault('maintainer', []).append((ts, row['number_of_maintainers']))
+    return jsonify({'metrics': grouped_data})
 
 
 @app.route('/')

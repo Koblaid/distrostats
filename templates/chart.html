@@ -6,61 +6,83 @@
     <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
     <script src="http://code.highcharts.com/highcharts.src.js"></script>
     <script language="javascript" type="text/javascript">
+
+        function createChart(divId, series){
+            $(divId).highcharts({
+                chart: {
+                    type: "line",
+                    zoomType: "x"
+                },
+                plotOptions: {
+                    series: {
+                        marker: {
+                            enabled: false
+                        }
+                    }
+                },
+                legend: {
+                    layout: 'vertical',
+                    align: 'right',
+                    verticalAlign: 'middle',
+                    borderWidth: 0
+                },
+                xAxis: {
+                    type: "datetime",
+                    plotLines: [{
+                        color: 'grey',
+                        label: { text: 'sarge' },
+                        value: Date.UTC(2005, 6, 6),
+                        width: 1,
+                    },{
+                        color: 'grey',
+                        label: { text: 'etch' },
+                        value: Date.UTC(2007, 4, 8),
+                        width: 1,
+                    },{
+                        color: 'grey',
+                        label: { text: 'lenny' },
+                        value: Date.UTC(2009, 2, 15),
+                        width: 1,
+                    },{
+                        color: 'grey',
+                        label: { text: 'squeeze' },
+                        value: Date.UTC(2011, 2, 6),
+                        width: 1,
+                    },{
+                        color: 'grey',
+                        label: { text: 'wheezy' },
+                        value: Date.UTC(2013, 5, 4),
+                        width: 1,
+                    },],
+                },
+                yAxis: {
+                    min: 0,
+                },
+                series: series
+            });
+        }
+
         $(function () {
             $.getJSON('/json', function(data) {
-                console.log(data);
-                $('#container').highcharts({
-                    chart: {
-                        type: "line",
-                        zoomType: "x"
-                    },
-                    plotOptions: {
-                        series: {
-                            marker: {
-                                enabled: false
-                            }
-                        }
-                    },
-                    legend: {
-                        layout: 'vertical',
-                        align: 'right',
-                        verticalAlign: 'middle',
-                        borderWidth: 0
-                    },
-                    xAxis: {
-                        type: "datetime",
-                        plotLines: [{
-                            color: 'grey',
-                            label: { text: 'sarge' },
-                            value: Date.UTC(2005, 6, 6),
-                            width: 1,
-                        },{
-                            color: 'grey',
-                            label: { text: 'etch' },
-                            value: Date.UTC(2007, 4, 8),
-                            width: 1,
-                        },{
-                            color: 'grey',
-                            label: { text: 'lenny' },
-                            value: Date.UTC(2009, 2, 15),
-                            width: 1,
-                        },{
-                            color: 'grey',
-                            label: { text: 'squeeze' },
-                            value: Date.UTC(2011, 2, 6),
-                            width: 1,
-                        },{
-                            color: 'grey',
-                            label: { text: 'wheezy' },
-                            value: Date.UTC(2013, 5, 4),
-                            width: 1,
-                        },],
-                    },
-                    yAxis: {
-                        min: 0,
-                    },
-                    series: data.chart_data
+
+                var package_chart_data = [];
+                var maintainer_chart_data = [];
+                $.each(data.metrics, function(dist_name, arches){
+                    $.each(arches, function(arch_name, metrics){
+                        package_chart_data.push({
+                            name: dist_name + ' ' + arch_name,
+                            data: metrics.pkg,
+                        });
+                        maintainer_chart_data.push({
+                            name: dist_name + ' ' + arch_name,
+                            data: metrics.maintainer,
+                        });
+                    });
                 });
+
+                createChart('#chart_package', package_chart_data);
+                createChart('#chart_maintainer', maintainer_chart_data);
+
             });
         });
 
@@ -74,7 +96,10 @@
 </head>
 <body>
     <h3>Number of Debian packages over time</h3>
-        <div id="container" style="width:100%; height:400px;"></div>
+        <div id="chart_package" style="width:100%; height:400px;"></div>
+        Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
+
+        <div id="chart_maintainer" style="width:100%; height:400px;"></div>
         Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
     <br>
     <table border=1>
