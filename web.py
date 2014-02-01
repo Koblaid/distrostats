@@ -38,7 +38,7 @@ def get_table_data():
         sf.number_of_maintainers,
         sf.filesize,
         sf.filepath,
-        sf.avg_size,
+        sf.avg_packed_size,
         sf.avg_installed_size,
         sf.avg_pack_ratio
     FROM snapshot s
@@ -52,7 +52,7 @@ def get_table_data():
         AND r.name = 'main'
     ORDER BY s.snapshot_time, d.name''')
     res = cur.fetchall()
-    cols = 'snapshot_time distribution repository architecture number_of_packages number_of_maintainers filesize filepath avg_size avg_installed_size avg_pack_ratio'.split()
+    cols = 'snapshot_time distribution repository architecture number_of_packages number_of_maintainers filesize filepath avg_packed_size avg_installed_size avg_pack_ratio'.split()
 
     data = []
     for row in res:
@@ -73,7 +73,7 @@ def json():
         d = grouped_data.setdefault(row['distribution'], {}).setdefault(row['architecture'], {})
         d.setdefault('pkg', []).append((ts, row['number_of_packages']))
         d.setdefault('maintainer', []).append((ts, row['number_of_maintainers']))
-        d.setdefault('avg_size', []).append((ts, int(row['avg_size']/1024)))
+        d.setdefault('avg_packed_size', []).append((ts, int(row['avg_packed_size']/1024)))
         d.setdefault('avg_installed_size', []).append((ts, int(row['avg_installed_size']/1024)))
         d.setdefault('avg_pack_ratio', []).append((ts, row['avg_pack_ratio']))
     return jsonify({'metrics': grouped_data})

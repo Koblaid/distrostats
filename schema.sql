@@ -48,7 +48,7 @@ CREATE TABLE snapshot_file (
   filesize              INTEGER NOT NULL,
   number_of_packages    INTEGER NOT NULL,
   number_of_maintainers INTEGER NOT NULL,
-  avg_size              INTEGER NOT NULL,
+  avg_packed_size       INTEGER NOT NULL,
   avg_installed_size    INTEGER NOT NULL,
   avg_pack_ratio        INTEGER NOT NULL,
   FOREIGN KEY(snapshot_id)          REFERENCES snapshot(id),
