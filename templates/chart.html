@@ -120,10 +120,6 @@
 
 
     </script>
-
-    <style media="screen" type="text/css">
-    body { font-size: 80% };
-    </style>
 </head>
 <body>
     <div id="chart_package" style="width:100%; height:400px;"></div>
@@ -140,47 +136,5 @@
 
     <div id="chart_pack_ratio" style="width:100%; height:400px;"></div>
     Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.
-
-    <br>
-    <table border=1>
-        <thead>
-            <tr>
-                <th>Snapshot</th>
-                <th>Distribution</th>
-                <th>Repository</th>
-                <th>Architecture</th>
-                <th>Number of packages</th>
-                <th>Number of maintainers</th>
-                <th>Filesize</th>
-                <th>Filepath</th>
-            </tr>
-        </thead>
-        <tbody>
-            {%for row in table %}
-            <tr>
-                <td>{{ row.snapshot_time }}</td>
-                <td>{{ row.distribution }}</td>
-                <td>{{ row.repository }}</td>
-                <td>{{ row.architecture }}</td>
-                <td>{{ row.number_of_packages or '' }}</td>
-                <td>{{ row.number_of_maintainers or ''}}</td>
-                <td>{{ row.filesize or ''}}</td>
-                <td>{{ row.filepath or ''}}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-        <tfoot>
-            <tr>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td>{{ total_filesize }} bytes</td>
-                <td>{{ number_of_files }} files</td>
-            </tr>
-        </tfoot>
-    </table>
 </body>
 </html>

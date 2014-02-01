@@ -85,6 +85,11 @@ def json():
 
 @app.route('/')
 def index():
+    return render_template('chart.html')
+
+
+@app.route('/table')
+def table():
     data = get_table_data()
     total_filesize = sum((row['filesize'] for row in data if row['filepath']))
     number_of_files = len([row['filepath'] for row in data if row['filepath']])
@@ -93,8 +98,7 @@ def index():
             row['filesize'] = '{:,}'.format(row['filesize'])
         else:
             row['filesize'] = ''
-    return render_template('chart.html', table=data, number_of_files=number_of_files, total_filesize='{:,}'.format(total_filesize))
-
+    return render_template('table.html', table=data, number_of_files=number_of_files, total_filesize='{:,}'.format(total_filesize))
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
