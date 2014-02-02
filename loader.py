@@ -139,6 +139,36 @@ def insert_file(conn, dist, timestamp, filesize, pkg_dict, pkg_id_cache):
         conn.execute('INSERT INTO snapshot_content (snapshot_id, package_id, distribution_id) VALUES (?, ?, ?)', args)
 
 
+def insert_file_pg(conn, dist, timestamp, filesize, pkg_dict, pkg_id_cache):
+    conn.autocommit = False
+    ts_text = parser.parse(timestamp).isoformat()
+    with conn.cursor() as cur:
+        cur.execute('SELECT id FROM snapshot WHERE snapshot_time = %s', (ts_text,))
+        res = cur.fetchall()
+        if res:
+            ((snapshot_id,),) = res
+        else:
+            args = (ts_text, filesize)
+            cur.execute('INSERT INTO snapshot (snapshot_time, filesize) VALUES (%s, %s) RETURNING id', args)
+            (snapshot_id,) = cur.fetchone()
+
+        for pkg_name, properties in pkg_dict.iteritems():
+            pkg_id = pkg_id_cache.get(pkg_name)
+            if pkg_id is None:
+                cur.execute('SELECT id FROM dist_package WHERE name = %s', (pkg_name,))
+                res = cur.fetchall()
+                if res:
+                    ((pkg_id,),) = res
+                else:
+                    cur.execute('INSERT INTO dist_package (name) VALUES (%s) RETURNING id', (pkg_name,))
+                    (pkg_id,) = cur.fetchone()
+                pkg_id_cache[pkg_name] = pkg_id
+
+            args = (snapshot_id, pkg_id, distributions[dist])
+            cur.execute('INSERT INTO snapshot_content (snapshot_id, package_id, distribution_id) VALUES (%s, %s, %s)', args)
+    conn.commit()
+
+
 db_filename = 'db.sqlite'
 distributions = {
     'stable': 1,
@@ -151,9 +181,20 @@ def connect_db():
     return conn
 
 
+def connect_db_pg():
+    import psycopg2
+    conn = psycopg2.connect(host='localhost', port=5432, user='distrostats', database='distrostats')
+    return conn
+
+
 def create_schema(conn):
     sql = open('schema.sql').read()
     conn.executescript(sql)
+
+
+def create_schema_pg(conn):
+    sql = open('schema.sql').read()
+    conn.cursor().execute(sql)
 
 
 def load_files_into_db(conn, path, timestamps, archive, dist, arch):
