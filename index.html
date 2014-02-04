@@ -25,14 +25,13 @@
     <div class="wrapper">
       <header>
         <h1 class="header">DistroStats</h1>
-        <p class="header">Statistics for oss operating systems</p>
-        Debian Charts:<br>
+        Debian:<br>
         <ul>
-            <li><a href="#chart_package">Number of packages</a></li>
-            <li><a href="#chart_maintainer">Number of maintainers</a></li>
-            <li><a href="#chart_size">Total package size and installed size</a></li>
-            <li><a href="#chart_avg_size">Average package size and average installed size</a></li>
-            <li><a href="#chart_pack_ratio">Ratio: package size / install size</a></li>
+            <li><a href="#anchor_package">Number of packages</a></li>
+            <li><a href="#anchor_maintainer">Number of maintainers</a></li>
+            <li><a href="#anchor_size">Total package size and installed size</a></li>
+            <li><a href="#anchor_avg_size">Avg packaged and installed size</a></li>
+            <li><a href="#anchor_pack_ratio">Ratio: package size / install size</a></li>
         </ul>
         Architectures<br>
         <label><input type="checkbox" onclick="toggleSeries();" name="arch" value="i386">i386</checkbox></label>
@@ -46,38 +45,38 @@
       <section>
         <h1>
           <a name="distrostats" class="anchor" href="#distrostats"><span class="octicon octicon-link"></span></a>
-          DistroStats
+          DistroStats &ndash; Statistics for OSS Distributions
         </h1>
         <h2>
           Debian
         </h2>
 
+        <h3><a name="anchor_package" class="anchor" href="#anchor_package"></a>Number of packages</h3>
         <figure>
-            <h3><a name="distrostats" class="anchor" href="#chart_size"></a>Number of packages</h3>
             <div class="chart" id="chart_package" style="width:100%; height:400px;"></div>
             <figcaption>Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.</figcaption>
         </figure>
 
+        <h3><a name="anchor_maintainer" class="anchor" href="#anchor_maintainer"></a>Number of maintainers</h3>
         <figure>
-            <h3><a name="distrostats" class="anchor" href="#chart_size"></a>Number of maintainers</h3>
             <div class="chart" id="chart_maintainer" style="width:100%; height:400px;"></div>
             <figcaption>Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.</figcaption>
         </figure>
 
+        <h3><a name="anchor_size" class="anchor" href="#anchor_size"></a>Total package size and installed size</h3>
         <figure>
-            <h3><a name="distrostats" class="anchor" href="#chart_size"></a>Total package size and installed size</h3>
             <div class="chart" id="chart_size" style="width:100%; height:400px;"></div>
             <figcaption>Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.</figcaption>
         </figure>
 
+        <h3><a name="anchor_avg_size" class="anchor" href="#anchor_avg_size"></a>Average package size and average installed size</h3>
         <figure>
-            <h3><a name="distrostats" class="anchor" href="#chart_size"></a>Average package size and average installed size</h3>
             <div class="chart" id="chart_avg_size" style="width:100%; height:400px;"></div>
             <figcaption>Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.</figcaption>
         </figure>
 
+        <h3><a name="anchor_pack_ratio" class="anchor" href="#anchor_pack_ratio"></a>Ratio: package size / install siz</h3>
         <figure>
-            <h3><a name="distrostats" class="anchor" href="#chart_size"></a>Ratio: package size / install size</h3>
             <div class="chart" id="chart_pack_ratio" style="width:100%; height:400px;"></div>
             <figcaption>Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.</figcaption>
         </figure>
