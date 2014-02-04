@@ -1,4 +1,4 @@
- function createChart(divId, title, series){
+ function createChart(divId, title, y_label, series){
     $(divId).highcharts({
         title: { text: title },
         chart: {
@@ -50,6 +50,9 @@
         },
         yAxis: {
             min: 0,
+            title: {
+                text: y_label
+            }
         },
         series: series
     });
@@ -147,11 +150,11 @@ $(function () {
             });
         });
 
-        createChart('#chart_package', 'Number of packages', package_chart_data);
-        createChart('#chart_maintainer', 'Number of maintainers', maintainer_chart_data);
-        createChart('#chart_size', 'Package size and installed size', size_chart_data);
-        createChart('#chart_avg_size', 'Average package size and average installed size', avg_size_chart_data);
-        createChart('#chart_pack_ratio', 'Ratio: package size / install size', pack_ratio_chart_data);
+        createChart('#chart_package', 'Number of packages', 'Number of packages', package_chart_data);
+        createChart('#chart_maintainer', 'Number of maintainers', 'Number of maintainers', maintainer_chart_data);
+        createChart('#chart_size', 'Total package size and installed size', 'Size in GiB', size_chart_data);
+        createChart('#chart_avg_size', 'Average package size and average installed size', 'Size in MiB', avg_size_chart_data);
+        createChart('#chart_pack_ratio', 'Ratio: package size / install size', 'Ratio', pack_ratio_chart_data);
     });
 });
 
