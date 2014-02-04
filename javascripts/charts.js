@@ -1,4 +1,4 @@
- function createChart(divId, title, series){
+function createChart(divId, title, y_label, value_suffix, series){
     $(divId).highcharts({
         title: { text: '' },
         chart: {
@@ -16,8 +16,10 @@
             layout: 'vertical',
             align: 'right',
             verticalAlign: 'middle',
-            borderWidth: 0
+            borderWidth: 0,
+            itemStyle: { color: '#232323' },
         },
+        tooltip: { valueSuffix: value_suffix },
         xAxis: {
             type: "datetime",
             min: Date.UTC(2005, 2, 12),
@@ -50,6 +52,10 @@
         },
         yAxis: {
             min: 0,
+            title: {
+                text: y_label,
+                style: { color: '#232323' }
+            },
         },
         series: series
     });
@@ -108,14 +114,14 @@ $(function () {
             });
 
             size_chart_data.push({
-                name: dist_name + ' ' + arch_name + ' total packed size',
+                name: dist_name + ' ' + arch_name + ' packed size',
                 data: metrics.total_packed_size,
                 distribution: dist_name,
                 architecture: arch_name,
                 visible: visible,
             });
             size_chart_data.push({
-                name: dist_name + ' ' + arch_name + ' total installed size',
+                name: dist_name + ' ' + arch_name + ' installed size',
                 data: metrics.total_installed_size,
                 distribution: dist_name,
                 architecture: arch_name,
@@ -147,10 +153,10 @@ $(function () {
         });
     });
 
-    createChart('#chart_package', 'Number of packages', package_chart_data);
-    createChart('#chart_maintainer', 'Number of maintainers', maintainer_chart_data);
-    createChart('#chart_size', 'Package size and installed size', size_chart_data);
-    createChart('#chart_avg_size', 'Average package size and average installed size', avg_size_chart_data);
-    createChart('#chart_pack_ratio', 'Ratio: package size / install size', pack_ratio_chart_data);
+    createChart('#chart_package', 'Number of packages', 'Number of packages', '', package_chart_data);
+    createChart('#chart_maintainer', 'Number of maintainers', 'Number of maintainers', '', maintainer_chart_data);
+    createChart('#chart_size', 'Total package size and installed size', 'Total size in GiB', ' GiB', size_chart_data);
+    createChart('#chart_avg_size', 'Average package size and average installed size', 'Average size in MiB', ' MiB', avg_size_chart_data);
+    createChart('#chart_pack_ratio', 'Ratio: package size / install size', 'Ratio', '', pack_ratio_chart_data);
 });
 
