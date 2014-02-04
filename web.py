@@ -77,7 +77,7 @@ def json():
         d.setdefault('maintainer', []).append((ts, row['number_of_maintainers']))
         d.setdefault('total_packed_size', []).append((ts, round(row['total_packed_size']/1024.**3,3)))
         d.setdefault('total_installed_size', []).append((ts, round(row['total_installed_size']/1024.**3,3)))
-        d.setdefault('avg_pack_ratio', []).append((ts, row['avg_pack_ratio']))
+        d.setdefault('avg_pack_ratio', []).append((ts, round(row['avg_pack_ratio'],3)))
         d.setdefault('avg_packed_size', []).append((ts, round(row['avg_packed_size']/1024.**2,3)))
         d.setdefault('avg_installed_size', []).append((ts, round(row['avg_installed_size']/1024.**2,3)))
     return jsonify({'metrics': grouped_data})
