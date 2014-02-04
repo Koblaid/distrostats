@@ -12,32 +12,78 @@
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
+
+    <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+    <!--<script src="http://code.highcharts.com/highcharts.src.js"></script>-->
+    <script src="http://github.highcharts.com/highcharts.js"></script>
+
+    <script src="javascripts/charts.js"></script>
+    <script src="javascripts/chart_data.js"></script>
   </head>
   <body>
     <div class="wrapper">
       <header>
         <h1 class="header">DistroStats</h1>
         <p class="header">Statistics for oss operating systems</p>
-
+        Charts:<br>
         <ul>
-          <li class="download"><a class="buttons" href="https://github.com/Koblaid/distrostats/zipball/master">Download ZIP</a></li>
-          <li class="download"><a class="buttons" href="https://github.com/Koblaid/distrostats/tarball/master">Download TAR</a></li>
-          <li><a class="buttons github" href="https://github.com/Koblaid/distrostats">View On GitHub</a></li>
+            <li><a href="#chart_package">Number of packages</a></li>
+            <li><a href="#chart_maintainer">Number of maintainers</a></li>
+            <li><a href="#chart_size">Total package size and installed size</a></li>
+            <li><a href="#chart_avg_size">Average package size and average installed size</a></li>
+            <li><a href="#chart_pack_ratio">Ratio: package size / install size</a></li>
         </ul>
-
-        <p class="header">This project is maintained by <a class="header name" href="https://github.com/Koblaid">Koblaid</a></p>
-
-
+        Architectures<br>
+        <label><input type="checkbox" onclick="toggleSeries();" name="arch" value="i386">i386</checkbox></label><br>
+        <label><input type="checkbox" onclick="toggleSeries();" name="arch" value="amd64" checked="checked">amd64</checkbox></label><br>
+        <label><input type="checkbox" onclick="toggleSeries();" name="arch" value="kfreebsd-amd64">kfreebsd-amd64</checkbox></label><br>
+        <br>
+        Distributions<br>
+        <label><input type="checkbox" onclick="toggleSeries();" name="dist" value="stable">stable</checkbox></label><br>
+        <label><input type="checkbox" onclick="toggleSeries();" name="dist" value="testing" checked="checked">testing</checkbox></label>
       </header>
       <section>
         <h1>
-<a name="distrostats" class="anchor" href="#distrostats"><span class="octicon octicon-link"></span></a>DistroStats</h1>
+          <a name="distrostats" class="anchor" href="#distrostats"><span class="octicon octicon-link"></span></a>
+          DistroStats
+        </h1>
+
+        <figure>
+            <h3><a name="distrostats" class="anchor" href="#chart_size"></a>Number of packages</h3>
+            <div class="chart" id="chart_package" style="width:100%; height:400px;"></div>
+            <figcaption>Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.</figcaption>
+        </figure>
+
+        <figure>
+            <h3><a name="distrostats" class="anchor" href="#chart_size"></a>Number of maintainers</h3>
+            <div class="chart" id="chart_maintainer" style="width:100%; height:400px;"></div>
+            <figcaption>Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.</figcaption>
+        </figure>
+
+        <figure>
+            <h3><a name="distrostats" class="anchor" href="#chart_size"></a>Total package size and installed size</h3>
+            <div class="chart" id="chart_size" style="width:100%; height:400px;"></div>
+            <figcaption>Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.</figcaption>
+        </figure>
+
+        <figure>
+            <h3><a name="distrostats" class="anchor" href="#chart_size"></a>Average package size and average installed size</h3>
+            <div class="chart" id="chart_avg_size" style="width:100%; height:400px;"></div>
+            <figcaption>Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.</figcaption>
+        </figure>
+
+        <figure>
+            <h3><a name="distrostats" class="anchor" href="#chart_size"></a>Ratio: package size / install size</h3>
+            <div class="chart" id="chart_pack_ratio" style="width:100%; height:400px;"></div>
+            <figcaption>Click on the entries in the legend to show/hide lines. Drag the mouse horizontally over the chart to zoom.</figcaption>
+        </figure>
       </section>
       <footer>
         <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
       </footer>
     </div>
     <!--[if !IE]><script>fixScale(document);</script><![endif]-->
-		
+
   </body>
 </html>

@@ -206,7 +206,7 @@ td {
 
 /* Wrapper */
 .wrapper {
-  width:960px;
+  width:1260px;
 }
 
 
@@ -264,7 +264,6 @@ header ul {
 header li {
 	list-style-type: none;
   width:132px;
-  height:15px;
 	margin-bottom: 12px;
 	line-height: 1em;
 	padding: 6px 6px 6px 7px;
@@ -317,7 +316,7 @@ a.buttons:hover {
 /* Section - for main page content */
 
 section {
-  width:650px;
+  width:950px;
   float:right;
   padding-bottom:50px;
 }
@@ -418,4 +417,8 @@ footer {
     font-size:12pt;
     color:#444;
   }
+}
+
+figcaption {
+  font-size: 85%;
 }
