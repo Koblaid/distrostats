@@ -85,7 +85,7 @@ def json():
 
 @app.route('/')
 def index():
-    return render_template('chart.html')
+    return render_template('index.html')
 
 
 @app.route('/table')
