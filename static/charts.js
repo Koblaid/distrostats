@@ -1,4 +1,4 @@
- function createChart(divId, title, y_label, series){
+function createChart(divId, title, y_label, value_suffix, series){
     $(divId).highcharts({
         title: { text: title },
         chart: {
@@ -16,8 +16,10 @@
             layout: 'vertical',
             align: 'right',
             verticalAlign: 'middle',
-            borderWidth: 0
+            borderWidth: 0,
+            itemStyle: { color: '#232323' },
         },
+        tooltip: { valueSuffix: value_suffix },
         xAxis: {
             type: "datetime",
             min: Date.UTC(2005, 2, 12),
@@ -51,8 +53,9 @@
         yAxis: {
             min: 0,
             title: {
-                text: y_label
-            }
+                text: y_label,
+                style: { color: '#232323' }
+            },
         },
         series: series
     });
@@ -150,11 +153,11 @@ $(function () {
             });
         });
 
-        createChart('#chart_package', 'Number of packages', 'Number of packages', package_chart_data);
-        createChart('#chart_maintainer', 'Number of maintainers', 'Number of maintainers', maintainer_chart_data);
-        createChart('#chart_size', 'Total package size and installed size', 'Size in GiB', size_chart_data);
-        createChart('#chart_avg_size', 'Average package size and average installed size', 'Size in MiB', avg_size_chart_data);
-        createChart('#chart_pack_ratio', 'Ratio: package size / install size', 'Ratio', pack_ratio_chart_data);
+        createChart('#chart_package', 'Number of packages', 'Number of packages', '', package_chart_data);
+        createChart('#chart_maintainer', 'Number of maintainers', 'Number of maintainers', '', maintainer_chart_data);
+        createChart('#chart_size', 'Total package size and installed size', 'Total size in GiB', ' GiB', size_chart_data);
+        createChart('#chart_avg_size', 'Average package size and average installed size', 'Average size in MiB', ' MiB', avg_size_chart_data);
+        createChart('#chart_pack_ratio', 'Ratio: package size / install size', 'Ratio', '', pack_ratio_chart_data);
     });
 });
 
