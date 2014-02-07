@@ -95,14 +95,12 @@ $(function () {
     var pack_ratio_chart_data = [];
     $.each(data.metrics, function(dist_name, arches){
         $.each(arches, function(arch_name, metrics){
-            var visible = dist_name === 'testing' && arch_name === 'amd64';
-
             package_chart_data.push({
                 name: dist_name + ' ' + arch_name,
                 data: metrics.pkg,
                 distribution: dist_name,
                 architecture: arch_name,
-                visible: visible,
+                visible: false,
             });
 
             maintainer_chart_data.push({
@@ -110,7 +108,7 @@ $(function () {
                 data: metrics.maintainer,
                 distribution: dist_name,
                 architecture: arch_name,
-                visible: visible,
+                visible: false,
             });
 
             size_chart_data.push({
@@ -118,14 +116,14 @@ $(function () {
                 data: metrics.total_packed_size,
                 distribution: dist_name,
                 architecture: arch_name,
-                visible: visible,
+                visible: false,
             });
             size_chart_data.push({
                 name: dist_name + ' ' + arch_name + ' installed size',
                 data: metrics.total_installed_size,
                 distribution: dist_name,
                 architecture: arch_name,
-                visible: visible,
+                visible: false,
             });
 
             avg_size_chart_data.push({
@@ -133,14 +131,14 @@ $(function () {
                 data: metrics.avg_packed_size,
                 distribution: dist_name,
                 architecture: arch_name,
-                visible: visible,
+                visible: false,
             });
             avg_size_chart_data.push({
                 name: dist_name + ' ' + arch_name + ' average installed size',
                 data: metrics.avg_installed_size,
                 distribution: dist_name,
                 architecture: arch_name,
-                visible: visible,
+                visible: false,
             });
 
             pack_ratio_chart_data.push({
@@ -148,7 +146,7 @@ $(function () {
                 data: metrics.avg_pack_ratio,
                 distribution: dist_name,
                 architecture: arch_name,
-                visible: visible,
+                visible: false,
             });
         });
     });
@@ -158,5 +156,6 @@ $(function () {
     createChart('#chart_size', 'Total package size and installed size', 'Total size in GiB', ' GiB', size_chart_data);
     createChart('#chart_avg_size', 'Average package size and average installed size', 'Average size in MiB', ' MiB', avg_size_chart_data);
     createChart('#chart_pack_ratio', 'Ratio: package size / install size', 'Ratio', '', pack_ratio_chart_data);
+    toggleSeries();
 });
 
